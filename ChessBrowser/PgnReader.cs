@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,39 +14,52 @@ namespace ChessBrowser
         {
             List<ChessGame> games = new List<ChessGame>();
             string[] lines = File.ReadAllLines(path);
+            var linesEnumerator = lines.GetEnumerator() as IEnumerator<string>;
 
-            string Event, Site, Round, WhitePlayer, BlackPlayer, Result;
-            int WhiteElo, BlackElo;
-            DateTime EventDate;
-
-            foreach (string line in lines)
+            while (linesEnumerator.MoveNext())
             {
-                string[] parts = line.Split(" ");
-                switch (parts[0])
+                string Event, Site, Round, WhitePlayer, BlackPlayer, Result;
+                int WhiteElo, BlackElo;
+                DateTime EventDate;
+
+                for (string line = linesEnumerator.Current; line != "\n"; linesEnumerator.MoveNext()) 
                 {
-                    case "[Event":
-                        break;
-                    case "[Site":
-                        break;
-                    case "[Date":
-                        break;
-                    case "[Round":
-                        break;
-                    case "[White":
-                        break;
-                    case "[Black":
-                        break;
-                    case "[Result":
-                        break;
-                    case "[WhiteElo":
-                        break;
-                    case "BlackElo":
-                        break;
-                    case "[EventDate":
-                        break;
-                    default:
-                        break;
+                    string[] parts = line.Split(" ");
+                    switch (parts[0])
+                    {
+                        case "[Event":
+                            Event = line.Substring(8, line.Length - 2);
+                            break;
+                        case "[Site":
+                            Site = line.Substring(7, line.Length - 2);
+                            break;
+                        case "[Round":
+                            Round = line.Substring(8, line.Length - 2);
+                            break;
+                        case "[White":
+                            WhitePlayer = line.Substring(8, line.Length - 2);
+                            break;
+                        case "[Black":
+                            BlackPlayer = line.Substring(8, line.Length - 2);
+                            break;
+                        case "[Result":
+                            Result = line.Substring(9, line.Length - 2);
+                            break;
+                        case "[WhiteElo":
+                            int.TryParse(line.Substring(11, line.Length - 2), out WhiteElo);
+                            break;
+                        case "[BlackElo":
+                            int.TryParse(line.Substring(11, line.Length - 2), out BlackElo);
+                            break;
+                        case "[EventDate":
+                            DateTime.TryParse(line.Substring(12, line.Length - 2), out EventDate);
+                            break;
+                        default:
+                            break;
+                    }
                 }
+                
+                
             }
 
             return games;
