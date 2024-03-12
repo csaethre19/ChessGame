@@ -17,7 +17,6 @@ namespace ChessBrowser
         public int BlackElo { get; set; }
         public string Result { get; set; }
         public DateTime EventDate { get; set; }
-
         public string Moves { get; set; }
 
         public ChessGame(string Event, string Site, string Round, 

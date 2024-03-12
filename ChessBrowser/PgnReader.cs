@@ -18,11 +18,19 @@ namespace ChessBrowser
 
             while (linesEnumerator.MoveNext())
             {
-                string Event, Site, Round, WhitePlayer, BlackPlayer, Result;
-                int WhiteElo, BlackElo;
-                DateTime EventDate;
+                string Event = "";
+                string Site = "";
+                string Round = "";
+                string WhitePlayer = "";
+                string BlackPlayer = "";
+                string Result = "";
+                string Moves = "";
+                int WhiteElo = 0;
+                int BlackElo = 0;
+                DateTime EventDate = new DateTime(0, 0, 0);
 
-                for (string line = linesEnumerator.Current; line != "\n"; linesEnumerator.MoveNext()) 
+                linesEnumerator.MoveNext();
+                for (string line = linesEnumerator.Current; line != ""; linesEnumerator.MoveNext())
                 {
                     string[] parts = line.Split(" ");
                     switch (parts[0])
@@ -58,8 +66,17 @@ namespace ChessBrowser
                             break;
                     }
                 }
-                
-                
+
+                StringBuilder sb = new StringBuilder();
+                linesEnumerator.MoveNext();
+                for (string line = linesEnumerator.Current; line != ""; linesEnumerator.MoveNext())
+                {
+                    sb.Append(line);
+                }
+                Moves = sb.ToString();
+
+                ChessGame game = new ChessGame(Event, Site, Round, WhitePlayer, BlackPlayer, WhiteElo, BlackElo, Result, EventDate, Moves);
+                games.Add(game);
             }
 
             return games;
