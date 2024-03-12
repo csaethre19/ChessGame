@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ChessBrowser
+namespace ChessBrowserLib
 {
-    internal class ChessGame
+    public class ChessGame
     {
         public string Event {  get; set; }
         public string Site {  get; set; }

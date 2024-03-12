@@ -6,17 +6,21 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace ChessBrowser
+namespace ChessBrowserLib
 {
-    internal static class PgnReader
+    public static class PgnReader
     {
-        static List<ChessGame> readPgnFile(string path)
+        public static List<ChessGame> readPgnFile(string path)
         {
             List<ChessGame> games = new List<ChessGame>();
             string[] lines = File.ReadAllLines(path);
-            var linesEnumerator = lines.GetEnumerator() as IEnumerator<string>;
 
-            while (linesEnumerator.MoveNext())
+            var linesEnumerator = ((IEnumerable<string>)lines).GetEnumerator();
+            if (linesEnumerator == null ) { return games; }
+
+            bool hasNext = true;
+
+            while (hasNext)
             {
                 string Event = "";
                 string Site = "";
@@ -27,40 +31,43 @@ namespace ChessBrowser
                 string Moves = "";
                 int WhiteElo = 0;
                 int BlackElo = 0;
-                DateTime EventDate = new DateTime(0, 0, 0);
+                DateTime EventDate = default(DateTime);
 
-                linesEnumerator.MoveNext();
-                for (string line = linesEnumerator.Current; line != ""; linesEnumerator.MoveNext())
+                while (hasNext)
                 {
+                    hasNext = linesEnumerator.MoveNext();
+                    string line = linesEnumerator.Current;
+                    if (line == "") break;
                     string[] parts = line.Split(" ");
+                    Console.WriteLine(parts[0]);
                     switch (parts[0])
                     {
                         case "[Event":
-                            Event = line.Substring(8, line.Length - 2);
+                            Event = line.Substring(8, line.Length - 2 - 8);
                             break;
                         case "[Site":
-                            Site = line.Substring(7, line.Length - 2);
+                            Site = line.Substring(7, line.Length - 2 - 7);
                             break;
                         case "[Round":
-                            Round = line.Substring(8, line.Length - 2);
+                            Round = line.Substring(8, line.Length - 2 - 8);
                             break;
                         case "[White":
-                            WhitePlayer = line.Substring(8, line.Length - 2);
+                            WhitePlayer = line.Substring(8, line.Length - 2 - 8);
                             break;
                         case "[Black":
-                            BlackPlayer = line.Substring(8, line.Length - 2);
+                            BlackPlayer = line.Substring(8, line.Length - 2 - 8);
                             break;
                         case "[Result":
-                            Result = line.Substring(9, line.Length - 2);
+                            Result = line.Substring(9, line.Length - 2 - 9);
                             break;
                         case "[WhiteElo":
-                            int.TryParse(line.Substring(11, line.Length - 2), out WhiteElo);
+                            int.TryParse(line.Substring(11, line.Length - 2 - 11), out WhiteElo);
                             break;
                         case "[BlackElo":
-                            int.TryParse(line.Substring(11, line.Length - 2), out BlackElo);
+                            int.TryParse(line.Substring(11, line.Length - 2 - 11), out BlackElo);
                             break;
                         case "[EventDate":
-                            DateTime.TryParse(line.Substring(12, line.Length - 2), out EventDate);
+                            DateTime.TryParse(line.Substring(12, line.Length - 2 - 12), out EventDate);
                             break;
                         default:
                             break;
@@ -68,9 +75,12 @@ namespace ChessBrowser
                 }
 
                 StringBuilder sb = new StringBuilder();
-                linesEnumerator.MoveNext();
-                for (string line = linesEnumerator.Current; line != ""; linesEnumerator.MoveNext())
+                while (hasNext)
                 {
+                    hasNext = linesEnumerator.MoveNext();
+                    if (!hasNext) break;
+                    string line = linesEnumerator.Current;
+                    if (line == "") break;
                     sb.Append(line);
                 }
                 Moves = sb.ToString();
