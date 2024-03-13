@@ -96,23 +96,15 @@ namespace ChessBrowser
       {
         try
         {
-          // Open a connection
           conn.Open();
 
-          // TODO:
-          // Generate and execute an SQL command,
           MySqlCommand cmd = conn.CreateCommand();
-          string dynamicSelect = "";
+          string dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result ";
           if (showMoves)
           {
-            dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result, g.Moves " +
-                "FROM Games g NATURAL JOIN Events e ";
+             dynamicSelect += ", g.Moves ";
           }
-          else
-          {
-            dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result " +
-                "FROM Games g NATURAL JOIN Events e ";
-          }
+          dynamicSelect += "FROM Games g NATURAL JOIN Events e ";
 
           if (white != null || black != null || opening != null || winner != null || useDate)
           {
@@ -145,13 +137,9 @@ namespace ChessBrowser
             }
             
             dynamicSelect += "WHERE " + whereParts[0];
-            //var paramStr = "@" + whereParts[0];
-            //cmd.Parameters.AddWithValue(paramStr, whereParts[0]);
 
             for (int i = 1; i < whereParts.Count; i++) {
               dynamicSelect += " AND " + whereParts[i];
-              //paramStr = "@" + whereParts[i];
-              //cmd.Parameters.AddWithValue(paramStr, whereParts[i]);
             }
 
           }
@@ -160,7 +148,6 @@ namespace ChessBrowser
 
           cmd.CommandText = dynamicSelect;
 
-          // then parse the results into an appropriate string and return it.
           using (MySqlDataReader reader = cmd.ExecuteReader())
           {
             while (reader.Read())
