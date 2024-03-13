@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls;
+﻿
+using Microsoft.Maui.Controls;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace ChessBrowser
     /// each chess game to the user's database.
     /// </summary>
     /// <param name="PGNfilename">The path to the PGN file</param>
-    internal static async Task InsertGameData( string PGNfilename, MainPage mainPage )
+    internal static async Task InsertGameData(string PGNfilename, MainPage mainPage)
     {
       // This will build a connection string to your user's database on atr,
       // assuimg you've typed a user and password in the GUI
@@ -39,7 +40,7 @@ namespace ChessBrowser
       //mainPage.SetNumWorkItems( ... );
 
 
-      using ( MySqlConnection conn = new MySqlConnection( connection ) )
+      using (MySqlConnection conn = new MySqlConnection(connection))
       {
         try
         {
@@ -54,9 +55,9 @@ namespace ChessBrowser
           await mainPage.NotifyWorkItemCompleted();
 
         }
-        catch ( Exception e )
+        catch (Exception e)
         {
-          System.Diagnostics.Debug.WriteLine( e.Message );
+          System.Diagnostics.Debug.WriteLine(e.Message);
         }
       }
 
@@ -76,9 +77,9 @@ namespace ChessBrowser
     /// <param name="end">The end of the date range</param>
     /// <param name="showMoves">True if the returned data should include the PGN moves</param>
     /// <returns>A string separated by newlines containing the filtered games</returns>
-    internal static string PerformQuery( string white, string black, string opening,
+    internal static string PerformQuery(string white, string black, string opening,
       string winner, bool useDate, DateTime start, DateTime end, bool showMoves,
-      MainPage mainPage )
+      MainPage mainPage)
     {
       // This will build a connection string to your user's database on atr,
       // assuimg you've typed a user and password in the GUI
@@ -91,7 +92,7 @@ namespace ChessBrowser
       // (see below return statement)
       int numRows = 0;
 
-      using ( MySqlConnection conn = new MySqlConnection( connection ) )
+      using (MySqlConnection conn = new MySqlConnection(connection))
       {
         try
         {
@@ -99,12 +100,88 @@ namespace ChessBrowser
           conn.Open();
 
           // TODO:
-          //       Generate and execute an SQL command,
-          //       then parse the results into an appropriate string and return it.
+          // Generate and execute an SQL command,
+          MySqlCommand cmd = conn.CreateCommand();
+          string dynamicSelect = "";
+          if (showMoves)
+          {
+            dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result, g.Moves " +
+                "FROM Games g NATURAL JOIN Events e ";
+          }
+          else
+          {
+            dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result " +
+                "FROM Games g NATURAL JOIN Events e ";
+          }
+
+          if (white != null || black != null || opening != null || winner != null || useDate)
+          {
+            List<string> whereParts = new List<string>();
+            if (white != null)
+            {
+              cmd.Parameters.AddWithValue("@white", white);
+              whereParts.Add("g.WhitePlayer=@white");
+            }
+            if (black != null)
+            {
+              cmd.Parameters.AddWithValue("@black", black);
+              whereParts.Add("g.BlackPlayer=@black");
+            }
+            if (opening != null)
+            {
+              cmd.Parameters.AddWithValue("@opening", opening);
+              whereParts.Add("g.Moves like '@opening%'");
+            }
+            if (winner != null)
+            {
+              cmd.Parameters.AddWithValue("@winner", winner);
+              whereParts.Add("g.Result=@winner");
+            }
+            if (useDate)
+            {
+              cmd.Parameters.AddWithValue("@start", start);
+              cmd.Parameters.AddWithValue("@end", end);
+              whereParts.Add("e.Date >= @start AND e.Date <= @end");
+            }
+            
+            dynamicSelect += "WHERE " + whereParts[0];
+            //var paramStr = "@" + whereParts[0];
+            //cmd.Parameters.AddWithValue(paramStr, whereParts[0]);
+
+            for (int i = 1; i < whereParts.Count; i++) {
+              dynamicSelect += " AND " + whereParts[i];
+              //paramStr = "@" + whereParts[i];
+              //cmd.Parameters.AddWithValue(paramStr, whereParts[i]);
+            }
+
+          }
+
+          System.Diagnostics.Debug.WriteLine("Dynamic Select: " + dynamicSelect);
+
+          cmd.CommandText = dynamicSelect;
+
+          // then parse the results into an appropriate string and return it.
+          using (MySqlDataReader reader = cmd.ExecuteReader())
+          {
+            while (reader.Read())
+            {
+              parsedResult += "Event: " + reader["Event"] + "\n" +
+                  "Site: " + reader["Site"] + "\n" +
+                  "Date: " + reader["Date"] + "\n" +
+                  "White: " + reader["WhitePlayer"] + "\n" +
+                  "Black: " + reader["BlackPlayer"] + "\n" +
+                  "Result: " + reader["Result"] + "\n";
+              if (showMoves)
+              {
+                parsedResult += reader["Moves"] + "\n";
+              }
+              parsedResult += "\n";
+            }
+          }
         }
-        catch ( Exception e )
+        catch (Exception e)
         {
-          System.Diagnostics.Debug.WriteLine( e.Message );
+          System.Diagnostics.Debug.WriteLine(e.Message);
         }
       }
 

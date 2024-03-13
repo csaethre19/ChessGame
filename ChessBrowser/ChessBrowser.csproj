@@ -63,4 +63,8 @@
 		<PackageReference Include="MySqlConnector" Version="2.3.5" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\ChessBrowserLib\ChessBrowserLib.csproj" />
+	</ItemGroup>
+
 </Project>
