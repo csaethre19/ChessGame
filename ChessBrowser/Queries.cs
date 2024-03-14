@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using ChessBrowserLib;
 
 /*
-  Author: Daniel Kopta and ...
+  Author: Daniel Kopta, Charlotte Saethre, and Jackson Linford
   Chess browser backend 
 */ 
 namespace ChessBrowser
