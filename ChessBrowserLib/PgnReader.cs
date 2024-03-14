@@ -7,10 +7,30 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.InteropServices;
 
+/*
+  Author: Charlotte Saethre, and Jackson Linford
+  Helper tool to read PGN files for ChessBrowser Project.   
+ */
 namespace ChessBrowserLib
 {
     public static class PgnReader
     {
+
+        /// <summary>
+        /// 
+        /// Reads PGN file and parses out the following information:
+        /// - Event name
+        /// - Site name
+        /// - WhitePlayer
+        /// - BlackPlayer
+        /// - Result of game
+        /// - Moves of game
+        /// - Elos of both white and black players
+        /// This information is used to construct ChessGame objects and inserted into a list.
+        /// 
+        /// </summary>
+        /// <param name="path">Path to PGN file to read.</param>
+        /// <returns>List of ChessGame objects that were parsed out of PGN file.</returns>
         public static List<ChessGame> ReadPgnFile(string path)
         {
             List<ChessGame> games = new List<ChessGame>();
