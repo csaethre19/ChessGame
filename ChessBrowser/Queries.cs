@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using ChessBrowserLib;
 
@@ -63,7 +64,8 @@ namespace ChessBrowser
             cmd.Parameters.AddWithValue("@welo", game.WhiteElo);
             cmd.Parameters.AddWithValue("@belo", game.BlackElo);
             cmd.Parameters.AddWithValue("@result", game.Result);
-            cmd.Parameters.AddWithValue("@date", game.EventDate);
+            string pattern = @"^\d{4}\.\d{2}\.\d{2}$";
+            cmd.Parameters.AddWithValue("@date", Regex.IsMatch(game.EventDate, pattern) ? game.EventDate : "0000-00-00");
             cmd.Parameters.AddWithValue("@moves", game.Moves);
 
             cmd.CommandText =

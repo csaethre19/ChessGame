@@ -52,7 +52,7 @@ namespace ChessBrowserLib
                 string Moves = "";
                 int WhiteElo = 0;
                 int BlackElo = 0;
-                DateTime EventDate = default(DateTime);
+                string EventDate = "";
 
                 do
                 {
@@ -93,7 +93,8 @@ namespace ChessBrowserLib
                             int.TryParse(line.Substring(11, line.Length - 2 - 11), out BlackElo);
                             break;
                         case "[EventDate":
-                            DateTime.TryParse(line.Substring(12, line.Length - 2 - 12), out EventDate);
+                            EventDate = line.Substring(12, line.Length - 2 - 12);
+                            //DateTime.TryParse(line.Substring(12, line.Length - 2 - 12), out EventDate);
                             break;
                         default:
                             break;

@@ -26,7 +26,7 @@ namespace ChessBrowserLib
         public int WhiteElo { get; set; }
         public int BlackElo { get; set; }
         public string Result { get; set; }
-        public DateTime EventDate { get; set; }
+        public string EventDate { get; set; }
         public string Moves { get; set; }
 
         /// <summary>
@@ -44,7 +44,7 @@ namespace ChessBrowserLib
         /// <param name="Moves">List of moves for the game</param>
         public ChessGame(string Event, string Site, string Round, 
             string WhitePlayer, string BlackPlayer, int WhiteElo, 
-            int BlackElo, string Result, DateTime EventDate, string Moves)
+            int BlackElo, string Result, string EventDate, string Moves)
         {
             this.Event = Event;
             this.Site = Site;
