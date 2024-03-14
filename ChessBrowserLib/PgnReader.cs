@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 /*
   Author: Charlotte Saethre, and Jackson Linford
@@ -38,8 +39,6 @@ namespace ChessBrowserLib
 
             var linesEnumerator = ((IEnumerable<string>)lines).GetEnumerator();
             if (linesEnumerator == null ) { return games; }
-
-            bool hasNext = true;
 
             while (linesEnumerator.MoveNext())
             {
@@ -93,8 +92,11 @@ namespace ChessBrowserLib
                             int.TryParse(line.Substring(11, line.Length - 2 - 11), out BlackElo);
                             break;
                         case "[EventDate":
-                            EventDate = line.Substring(12, line.Length - 2 - 12);
                             //DateTime.TryParse(line.Substring(12, line.Length - 2 - 12), out EventDate);
+                            EventDate = line.Substring(12, line.Length - 2 - 12);
+                            
+                            string pattern = @"^\d{4}\.\d{2}\.\d{2}$";
+                            EventDate = Regex.IsMatch(EventDate, pattern) ? EventDate : "0000-00-00";
                             break;
                         default:
                             break;

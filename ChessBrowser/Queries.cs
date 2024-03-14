@@ -17,17 +17,6 @@ using ChessBrowserLib;
 */ 
 namespace ChessBrowser
 {
-  public static class Extensions
-  {
-    public static List<List<T>> Partition<T>(this List<T> values, int chunkSize)
-    {
-      return values.Select((x, i) => new { Index = i, Value = x })
-        .GroupBy(x => x.Index / chunkSize)
-        .Select(x => x.Select(v => v.Value).ToList())
-        .ToList();
-    }
-  }
-  
   internal class Queries
   {
 
@@ -64,8 +53,7 @@ namespace ChessBrowser
             cmd.Parameters.AddWithValue("@welo", game.WhiteElo);
             cmd.Parameters.AddWithValue("@belo", game.BlackElo);
             cmd.Parameters.AddWithValue("@result", game.Result);
-            string pattern = @"^\d{4}\.\d{2}\.\d{2}$";
-            cmd.Parameters.AddWithValue("@date", Regex.IsMatch(game.EventDate, pattern) ? game.EventDate : "0000-00-00");
+            cmd.Parameters.AddWithValue("@date", game.EventDate);
             cmd.Parameters.AddWithValue("@moves", game.Moves);
 
             cmd.CommandText =
@@ -177,10 +165,6 @@ namespace ChessBrowser
           }
 
           dynamicSelect += ";";
-
-
-          System.Diagnostics.Debug.WriteLine("Dynamic Select: " + dynamicSelect);
-
           cmd.CommandText = dynamicSelect;
 
           using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -188,9 +172,16 @@ namespace ChessBrowser
             while (reader.Read())
             {
               numRows += 1;
+              string date = "00/00/0000 12:00:00 AM";
+              try
+              {
+                date = reader["Date"].ToString();
+              }
+              catch (System.InvalidCastException e) {}
+              
               parsedResult += "Event: " + reader["Name"] + "\n" +
                   "Site: " + reader["Site"] + "\n" +
-                  "Date: " + reader["Date"] + "\n" +
+                  "Date: " + date + "\n" +
                   String.Format("White: {0} ({1:d})\n", reader["WhitePlayer"], reader["WhiteElo"])+
                   String.Format("Black: {0} ({1:d})\n", reader["BlackPlayer"], reader["BlackElo"])+
                   "Result: " + reader["Result"] + "\n";
