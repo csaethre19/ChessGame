@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace ChessBrowserLib
 {
@@ -20,7 +21,7 @@ namespace ChessBrowserLib
 
             bool hasNext = true;
 
-            while (hasNext)
+            while (linesEnumerator.MoveNext())
             {
                 string Event = "";
                 string Site = "";
@@ -33,13 +34,13 @@ namespace ChessBrowserLib
                 int BlackElo = 0;
                 DateTime EventDate = default(DateTime);
 
-                while (hasNext)
+                do
                 {
-                    hasNext = linesEnumerator.MoveNext();
                     string line = linesEnumerator.Current;
+
                     if (line == "") break;
+
                     string[] parts = line.Split(" ");
-                    Console.WriteLine(parts[0]);
                     switch (parts[0])
                     {
                         case "[Event":
@@ -72,15 +73,14 @@ namespace ChessBrowserLib
                         default:
                             break;
                     }
-                }
+                } while (linesEnumerator.MoveNext());
 
                 StringBuilder sb = new StringBuilder();
-                while (hasNext)
+                while (linesEnumerator.MoveNext())
                 {
-                    hasNext = linesEnumerator.MoveNext();
-                    if (!hasNext) break;
                     string line = linesEnumerator.Current;
                     if (line == "") break;
+                    
                     sb.Append(line);
                 }
                 Moves = sb.ToString();
