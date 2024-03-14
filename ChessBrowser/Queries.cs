@@ -8,13 +8,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ChessBrowserLib;
+
 /*
   Author: Daniel Kopta and ...
   Chess browser backend 
-*/
-
+*/ 
 namespace ChessBrowser
 {
+  public static class Extensions
+  {
+    public static List<List<T>> Partition<T>(this List<T> values, int chunkSize)
+    {
+      return values.Select((x, i) => new { Index = i, Value = x })
+        .GroupBy(x => x.Index / chunkSize)
+        .Select(x => x.Select(v => v.Value).ToList())
+        .ToList();
+    }
+  }
+  
   internal class Queries
   {
 
@@ -29,16 +41,9 @@ namespace ChessBrowser
       // This will build a connection string to your user's database on atr,
       // assuimg you've typed a user and password in the GUI
       string connection = mainPage.GetConnectionString();
-
-      // TODO:
-      //       Load and parse the PGN file
-      //       We recommend creating separate libraries to represent chess data and load the file
-
-      // TODO:
-      //       Use this to tell the GUI's progress bar how many total work steps there are
-      //       For example, one iteration of your main upload loop could be one work step
-      //mainPage.SetNumWorkItems( ... );
-
+      
+      List<ChessGame> games = PgnReader.ReadPgnFile(PGNfilename);
+      mainPage.SetNumWorkItems(games.Count);
 
       using (MySqlConnection conn = new MySqlConnection(connection))
       {
@@ -46,13 +51,34 @@ namespace ChessBrowser
         {
           // Open a connection
           conn.Open();
+          foreach (ChessGame game in games)
+          {
+            var cmd = conn.CreateCommand();
+            
+            cmd.Parameters.AddWithValue("@event", game.Event);
+            cmd.Parameters.AddWithValue("@site", game.Site);
+            cmd.Parameters.AddWithValue("@round", game.Round);
+            cmd.Parameters.AddWithValue("@white", game.WhitePlayer);
+            cmd.Parameters.AddWithValue("@black", game.BlackPlayer);
+            cmd.Parameters.AddWithValue("@welo", game.WhiteElo);
+            cmd.Parameters.AddWithValue("@belo", game.BlackElo);
+            cmd.Parameters.AddWithValue("@result", game.Result);
+            cmd.Parameters.AddWithValue("@date", game.EventDate);
+            cmd.Parameters.AddWithValue("@moves", game.Moves);
 
-          // TODO:
-          //       iterate through your data and generate appropriate insert commands
+            cmd.CommandText =
+              "INSERT INTO Players (Name, Elo) values (@white, @welo) on duplicate key update Elo=if(Elo<@welo,@welo,Elo);" +
+              "INSERT INTO Players (Name, Elo) values (@black, @belo) on duplicate key update Elo=if(Elo<@belo,@belo,Elo);" +
+              "INSERT IGNORE INTO Events (Name, Site, Date) values (@event, @site, @date);" +
+              "INSERT IGNORE INTO Games (Round, Result, Moves, BlackPlayer, WhitePlayer, eID) values (@round, @result, @moves," +
+                  "(SELECT pID FROM Players WHERE Name=@black), (SELECT pID FROM Players WHERE Name=@white)," +
+                  "(SELECT eID FROM Events WHERE Name=@event AND Site=@site AND Date=@date));";
 
-          // TODO:
-          //       Use this inside a loop to tell the GUI that one work step has completed:
-          await mainPage.NotifyWorkItemCompleted();
+            cmd.ExecuteNonQuery();
+            
+            await mainPage.NotifyWorkItemCompleted();
+          }
+
 
         }
         catch (Exception e)
@@ -102,6 +128,8 @@ namespace ChessBrowser
           string dynamicSelect = "SELECT e.Name, e.Site, e.Date, " +
                                  "(SELECT Name FROM Players WHERE pID=g.WhitePlayer) as WhitePlayer, " +
                                  "(SELECT Name FROM Players WHERE pID=g.BlackPlayer) as BlackPlayer, " +
+                                 "(SELECT Elo FROM Players WHERE pID=g.WhitePlayer) as WhiteElo, " +
+                                 "(SELECT Elo FROM Players WHERE pID=g.BlackPlayer) as BlackElo, " +
                                  "g.Result";
           if (showMoves)
           {
@@ -113,17 +141,17 @@ namespace ChessBrowser
           if (white != null)
           {
             cmd.Parameters.AddWithValue("@white", white);
-            whereParts.Add("g.WhitePlayer=(SELECT pID FROM Players WHERE Name=@white limit 1)");
+            whereParts.Add("g.WhitePlayer=(SELECT pID FROM Players WHERE Name=@white)");
           }
           if (black != null)
           {
             cmd.Parameters.AddWithValue("@black", black);
-            whereParts.Add("g.BlackPlayer=(SELECT pID FROM Players WHERE Name=@black limit 1)");
+            whereParts.Add("g.BlackPlayer=(SELECT pID FROM Players WHERE Name=@black)");
           }
           if (opening != null)
           {
-            cmd.Parameters.AddWithValue("@opening", opening);
-            whereParts.Add("g.Moves like '@opening%'");
+            cmd.Parameters.AddWithValue("@opening", opening + "%");
+            whereParts.Add("g.Moves like @opening");
           }
           if (winner != null)
           {
@@ -161,8 +189,8 @@ namespace ChessBrowser
               parsedResult += "Event: " + reader["Name"] + "\n" +
                   "Site: " + reader["Site"] + "\n" +
                   "Date: " + reader["Date"] + "\n" +
-                  "White: " + reader["WhitePlayer"] + "\n" +
-                  "Black: " + reader["BlackPlayer"] + "\n" +
+                  String.Format("White: {0} ({1:d})\n", reader["WhitePlayer"], reader["WhiteElo"])+
+                  String.Format("Black: {0} ({1:d})\n", reader["BlackPlayer"], reader["BlackElo"])+
                   "Result: " + reader["Result"] + "\n";
               if (showMoves)
               {
@@ -178,7 +206,7 @@ namespace ChessBrowser
         }
       }
 
-      return numRows + " results\n\n" + parsedResult;
+      return numRows + " result" + (numRows==1 ? "" : "s") + "\n\n" + parsedResult;
     }
 
   }
