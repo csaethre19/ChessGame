@@ -99,50 +99,52 @@ namespace ChessBrowser
           conn.Open();
 
           MySqlCommand cmd = conn.CreateCommand();
-          string dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result ";
+          string dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result";
           if (showMoves)
           {
-             dynamicSelect += ", g.Moves ";
+             dynamicSelect += ", g.Moves";
           }
-          dynamicSelect += "FROM Games g NATURAL JOIN Events e ";
+          dynamicSelect += " FROM Games g NATURAL JOIN Events e";
 
-          if (white != null || black != null || opening != null || winner != null || useDate)
+          List<string> whereParts = new List<string>();
+          if (white != null)
           {
-            List<string> whereParts = new List<string>();
-            if (white != null)
-            {
-              cmd.Parameters.AddWithValue("@white", white);
-              whereParts.Add("g.WhitePlayer=@white");
-            }
-            if (black != null)
-            {
-              cmd.Parameters.AddWithValue("@black", black);
-              whereParts.Add("g.BlackPlayer=@black");
-            }
-            if (opening != null)
-            {
-              cmd.Parameters.AddWithValue("@opening", opening);
-              whereParts.Add("g.Moves like '@opening%'");
-            }
-            if (winner != null)
-            {
-              cmd.Parameters.AddWithValue("@winner", winner);
-              whereParts.Add("g.Result=@winner");
-            }
-            if (useDate)
-            {
-              cmd.Parameters.AddWithValue("@start", start);
-              cmd.Parameters.AddWithValue("@end", end);
-              whereParts.Add("e.Date >= @start AND e.Date <= @end");
-            }
-            
-            dynamicSelect += "WHERE " + whereParts[0];
-
-            for (int i = 1; i < whereParts.Count; i++) {
-              dynamicSelect += " AND " + whereParts[i];
-            }
-
+            cmd.Parameters.AddWithValue("@white", white);
+            whereParts.Add("g.WhitePlayer=(SELECT pID FROM Players WHERE Name=@white limit 1)");
           }
+          if (black != null)
+          {
+            cmd.Parameters.AddWithValue("@black", black);
+            whereParts.Add("g.BlackPlayer=(SELECT pID FROM Players WHERE Name=@black limit 1)");
+          }
+          if (opening != null)
+          {
+            cmd.Parameters.AddWithValue("@opening", opening);
+            whereParts.Add("g.Moves like '@opening%'");
+          }
+          if (winner != null)
+          {
+            cmd.Parameters.AddWithValue("@winner", winner);
+            whereParts.Add("g.Result=@winner");
+          }
+          if (useDate)
+          {
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@end", end);
+            whereParts.Add("e.Date >= @start AND e.Date <= @end");
+          }
+
+          if (whereParts.Count != 0)
+          { 
+            dynamicSelect += " WHERE " + whereParts[0];
+          }
+
+          for (int i = 1; i < whereParts.Count; i++) {
+            dynamicSelect += " AND " + whereParts[i];
+          }
+
+          dynamicSelect += ";";
+
 
           System.Diagnostics.Debug.WriteLine("Dynamic Select: " + dynamicSelect);
 
@@ -152,7 +154,8 @@ namespace ChessBrowser
           {
             while (reader.Read())
             {
-              parsedResult += "Event: " + reader["Event"] + "\n" +
+              numRows += 1;
+              parsedResult += "Event: " + reader["Name"] + "\n" +
                   "Site: " + reader["Site"] + "\n" +
                   "Date: " + reader["Date"] + "\n" +
                   "White: " + reader["WhitePlayer"] + "\n" +
@@ -172,7 +175,7 @@ namespace ChessBrowser
         }
       }
 
-      return numRows + " results\n" + parsedResult;
+      return numRows + " results\n\n" + parsedResult;
     }
 
   }
