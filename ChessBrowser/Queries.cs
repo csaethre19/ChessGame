@@ -99,7 +99,10 @@ namespace ChessBrowser
           conn.Open();
 
           MySqlCommand cmd = conn.CreateCommand();
-          string dynamicSelect = "SELECT e.Name, e.Site, e.Date, g.WhitePlayer, g.BlackPlayer, g.Result";
+          string dynamicSelect = "SELECT e.Name, e.Site, e.Date, " +
+                                 "(SELECT Name FROM Players WHERE pID=g.WhitePlayer) as WhitePlayer, " +
+                                 "(SELECT Name FROM Players WHERE pID=g.BlackPlayer) as BlackPlayer, " +
+                                 "g.Result";
           if (showMoves)
           {
              dynamicSelect += ", g.Moves";
