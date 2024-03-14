@@ -11,7 +11,7 @@ namespace ChessBrowserLib
 {
     public static class PgnReader
     {
-        public static List<ChessGame> readPgnFile(string path)
+        public static List<ChessGame> ReadPgnFile(string path)
         {
             List<ChessGame> games = new List<ChessGame>();
             string[] lines = File.ReadAllLines(path);
@@ -59,7 +59,12 @@ namespace ChessBrowserLib
                             BlackPlayer = line.Substring(8, line.Length - 2 - 8);
                             break;
                         case "[Result":
-                            Result = line.Substring(9, line.Length - 2 - 9);
+                            Result = (line.Substring(9, line.Length - 2 - 9)) switch
+                            {
+                                "1-0" => "W",
+                                "0-1" => "B",
+                                _ => "D"
+                            };
                             break;
                         case "[WhiteElo":
                             int.TryParse(line.Substring(11, line.Length - 2 - 11), out WhiteElo);
